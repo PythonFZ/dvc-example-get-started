@@ -11,52 +11,6 @@ artifacts:
     - nlp
     - classification
     - stackoverflow
-stages:
-  featurize:
-    cmd: python src/featurization.py data/prepared data/features
-    deps:
-    - data/prepared
-    - src/featurization.py
-    params:
-    - featurize.max_features
-    - featurize.ngrams
-    outs:
-    - data/features
-  train:
-    cmd: python src/train.py data/features model.pkl
-    deps:
-    - data/features
-    - src/train.py
-    params:
-    - train.min_split
-    - train.n_est
-    - train.seed
-    outs:
-    - model.pkl
-  evaluate:
-    cmd: python src/evaluate.py model.pkl data/features
-    deps:
-    - data/features
-    - model.pkl
-    - src/evaluate.py
-    outs:
-    - eval/importance.png
-    - eval/live/plots:
-        cache: false
-    - eval/prc:
-        cache: false
-    metrics:
-    - eval/live/metrics.json:
-        cache: false
-  Prepare:
-    cmd: zntrack run src.prepare.Prepare --name Prepare
-    deps:
-    - data/data.xml
-    params:
-    - Prepare
-    outs:
-    - data/prepared
-    - nodes/Prepare/uuid
 plots:
 - ROC:
     template: simple
@@ -77,3 +31,45 @@ plots:
       eval/prc/train.json: precision
       eval/prc/test.json: precision
 - eval/importance.png
+stages:
+  Prepare:
+    cmd: zntrack run src.prepare.Prepare --name Prepare
+    deps:
+    - data/data.xml
+    params:
+    - Prepare
+    outs:
+    - data/prepared
+    - nodes/Prepare/uuid
+  Featurize:
+    cmd: zntrack run src.featurization.Featurize --name Featurize
+    deps:
+    - data/prepared
+    params:
+    - Featurize
+    outs:
+    - data/features
+    - nodes/Featurize/uuid
+  Train:
+    cmd: zntrack run src.train.Train --name Train
+    deps:
+    - data/features
+    params:
+    - Train
+    outs:
+    - model.pkl
+    - nodes/Train/uuid
+  Evaluate:
+    cmd: zntrack run src.evaluate.Evaluate --name Evaluate
+    deps:
+    - data/features
+    - model.pkl
+    outs:
+    - eval/importance.png
+    - eval/live/metrics.json:
+        cache: false
+    - eval/live/plots:
+        cache: false
+    - eval/prc:
+        cache: false
+    - nodes/Evaluate/uuid

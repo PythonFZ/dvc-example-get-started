@@ -9,6 +9,7 @@ from sklearn import metrics
 from sklearn import tree
 from dvclive import Live
 from matplotlib import pyplot as plt
+import zntrack
 
 
 def evaluate(model, matrix, split, live, save_path):
@@ -92,37 +93,36 @@ def save_importance_plot(model, feature_names, save_path):
     fig.savefig(os.path.join(save_path, "importance.png"))
 
 
-def main():
-    EVAL_PATH = "eval"
+class Evaluate(zntrack.Node):
+    model = zntrack.dvc.deps()
+    features = zntrack.dvc.deps()
 
-    if len(sys.argv) != 3:
-        sys.stderr.write("Arguments error. Usage:\n")
-        sys.stderr.write("\tpython evaluate.py model features\n")
-        sys.exit(1)
+    importance_png = zntrack.dvc.outs("eval/importance.png")
+    metrics = zntrack.dvc.outs_no_cache("eval/live/metrics.json")
+    plots = zntrack.dvc.outs_no_cache("eval/live/plots")
+    prc = zntrack.dvc.outs_no_cache("eval/prc")
 
-    model_file = sys.argv[1]
-    train_file = os.path.join(sys.argv[2], "train.pkl")
-    test_file = os.path.join(sys.argv[2], "test.pkl")
+    def run(self) -> None:
+        EVAL_PATH = "eval"
 
-    # Load model and data.
-    with open(model_file, "rb") as fd:
-        model = pickle.load(fd)
+        # Load model and data.
+        with open(self.model, "rb") as fd:
+            model = pickle.load(fd)
 
-    with open(train_file, "rb") as fd:
-        train, feature_names = pickle.load(fd)
+        train_file = os.path.join(self.features, "train.pkl")
+        test_file = os.path.join(self.features, "test.pkl")
 
-    with open(test_file, "rb") as fd:
-        test, _ = pickle.load(fd)
+        with open(train_file, "rb") as fd:
+            train, feature_names = pickle.load(fd)
 
-    # Evaluate train and test datasets.
-    live = Live(os.path.join(EVAL_PATH, "live"), dvcyaml=False)
-    evaluate(model, train, "train", live, save_path=EVAL_PATH)
-    evaluate(model, test, "test", live, save_path=EVAL_PATH)
-    live.make_summary()
+        with open(test_file, "rb") as fd:
+            test, _ = pickle.load(fd)
 
-    # Dump feature importance plot.
-    save_importance_plot(model, feature_names, save_path=EVAL_PATH)
+        # Evaluate train and test datasets.
+        live = Live(os.path.join(EVAL_PATH, "live"), dvcyaml=False)
+        evaluate(model, train, "train", live, save_path=EVAL_PATH)
+        evaluate(model, test, "test", live, save_path=EVAL_PATH)
+        live.make_summary()
 
-
-if __name__ == "__main__":
-    main()
+        # Dump feature importance plot.
+        save_importance_plot(model, feature_names, save_path=EVAL_PATH)
