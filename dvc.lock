@@ -48,7 +48,7 @@ stages:
     deps:
     - path: data/features
       hash: md5
-      md5: 4281fdd8e973e3bbe5abc0ae10adebc7.dir
+      md5: f35d4cc2c552ac959ae602162b8543f3.dir
       size: 2232588
       nfiles: 2
     - path: src/train.py
@@ -63,20 +63,20 @@ stages:
     outs:
     - path: model.pkl
       hash: md5
-      md5: cb29f3849c328b789704982e62103a2f
-      size: 1957931
+      md5: 0e38a20998aa4e8e49c67e7d39fde4ca
+      size: 1763779
   evaluate:
     cmd: python src/evaluate.py model.pkl data/features
     deps:
     - path: data/features
       hash: md5
-      md5: 4281fdd8e973e3bbe5abc0ae10adebc7.dir
+      md5: f35d4cc2c552ac959ae602162b8543f3.dir
       size: 2232588
       nfiles: 2
     - path: model.pkl
       hash: md5
-      md5: cb29f3849c328b789704982e62103a2f
-      size: 1957931
+      md5: 0e38a20998aa4e8e49c67e7d39fde4ca
+      size: 1763779
     - path: src/evaluate.py
       hash: md5
       md5: e7e4c46f018114d2b456b696e1d30212
@@ -84,7 +84,7 @@ stages:
     outs:
     - path: eval/importance.png
       hash: md5
-      md5: 51199e7a6ab977cb92c39b84306c1389
+      md5: 16f54f137ecc1ffd03b928e90e75a5cf
       size: 34065
     - path: eval/live/metrics.json
       hash: md5
@@ -92,11 +92,114 @@ stages:
       size: 196
     - path: eval/live/plots
       hash: md5
-      md5: d1f1f9f7dce5d1c8076f8eef59f585d5.dir
-      size: 747246
+      md5: b2fbac1df4c427b74bfaac355d8fa46c.dir
+      size: 747253
       nfiles: 4
     - path: eval/prc
       hash: md5
-      md5: a3be580ddaffbf75398db7484acbcbd8.dir
-      size: 297855
+      md5: 7a7fc103272b4a0a27020ca0ad42eacf.dir
+      size: 297862
       nfiles: 2
+  Prepare:
+    cmd: zntrack run src.prepare.Prepare --name Prepare
+    deps:
+    - path: data/data.xml
+      hash: md5
+      md5: 22a1a2931c8370d3aeedd7183606fd7f
+      size: 14445097
+    params:
+      params.yaml:
+        Prepare:
+          seed: 20170428
+          split: 0.2
+    outs:
+    - path: data/prepared
+      hash: md5
+      md5: 153aad06d376b6595932470e459ef42a.dir
+      size: 8437363
+      nfiles: 2
+    - path: nodes/Prepare/uuid
+      hash: md5
+      md5: a53f4517c091182927a4351423d5f2f1
+      size: 36
+  Featurize:
+    cmd: zntrack run src.featurization.Featurize --name Featurize
+    deps:
+    - path: data/prepared
+      hash: md5
+      md5: 153aad06d376b6595932470e459ef42a.dir
+      size: 8437363
+      nfiles: 2
+    params:
+      params.yaml:
+        Featurize:
+          max_features: 200
+          ngrams: 2
+    outs:
+    - path: data/features
+      hash: md5
+      md5: f35d4cc2c552ac959ae602162b8543f3.dir
+      size: 2232588
+      nfiles: 2
+    - path: nodes/Featurize/uuid
+      hash: md5
+      md5: 8ca0808ff282dac98af1f3a117b38e0c
+      size: 36
+  Train:
+    cmd: zntrack run src.train.Train --name Train
+    deps:
+    - path: data/features
+      hash: md5
+      md5: f35d4cc2c552ac959ae602162b8543f3.dir
+      size: 2232588
+      nfiles: 2
+    params:
+      params.yaml:
+        Train:
+          min_split: 0.01
+          n_est: 50
+          seed: 20170428
+    outs:
+    - path: model.pkl
+      hash: md5
+      md5: 0e38a20998aa4e8e49c67e7d39fde4ca
+      size: 1763779
+    - path: nodes/Train/uuid
+      hash: md5
+      md5: 95b257e56668449a25659152d80baf38
+      size: 36
+  Evaluate:
+    cmd: zntrack run src.evaluate.Evaluate --name Evaluate
+    deps:
+    - path: data/features
+      hash: md5
+      md5: f35d4cc2c552ac959ae602162b8543f3.dir
+      size: 2232588
+      nfiles: 2
+    - path: model.pkl
+      hash: md5
+      md5: 0e38a20998aa4e8e49c67e7d39fde4ca
+      size: 1763779
+    outs:
+    - path: eval/importance.png
+      hash: md5
+      md5: 16f54f137ecc1ffd03b928e90e75a5cf
+      size: 34065
+    - path: eval/live/metrics.json
+      hash: md5
+      md5: e47047573188bfc2079ea080ead80520
+      size: 196
+    - path: eval/live/plots
+      hash: md5
+      md5: 297006ee07ab6691ccd37f266da43694.dir
+      size: 747257
+      nfiles: 4
+    - path: eval/prc
+      hash: md5
+      md5: e180db2e368a2f4ed7c5fc2cc89d41f9.dir
+      size: 297854
+      nfiles: 2
+    - path: nodes/Evaluate/uuid
+      hash: md5
+      md5: a2226ed691267e162dd86aab3d10bb27
+      size: 36

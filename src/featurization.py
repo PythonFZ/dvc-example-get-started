@@ -7,7 +7,7 @@ import pandas as pd
 import scipy.sparse as sparse
 import yaml
 from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
-
+import zntrack
 
 def get_df(data):
     """Read the input data file and return a data frame."""
@@ -89,48 +89,38 @@ def generate_and_save_test_features(test_input, test_output, bag_of_words, tfidf
     save_matrix(df_test, test_words_tfidf_matrix, feature_names, test_output)
 
 
-def main():
-    params = yaml.safe_load(open("params.yaml"))["featurize"]
+class Featurize(zntrack.Node):
+    max_features: int = zntrack.zn.params(200)
+    ngrams: int = zntrack.zn.params(2)
 
-    np.set_printoptions(suppress=True)
+    prepared: str = zntrack.dvc.deps()
+    features: str = zntrack.dvc.outs("data/features")
 
-    if len(sys.argv) != 3 and len(sys.argv) != 5:
-        sys.stderr.write("Arguments error. Usage:\n")
-        sys.stderr.write("\tpython featurization.py data-dir-path features-dir-path\n")
-        sys.exit(1)
+    def run(self):
+        np.set_printoptions(suppress=True)
 
-    in_path = sys.argv[1]
-    out_path = sys.argv[2]
+        train_input = os.path.join(self.prepared, "train.tsv")
+        test_input = os.path.join(self.prepared, "test.tsv")
+        train_output = os.path.join(self.features, "train.pkl")
+        test_output = os.path.join(self.features, "test.pkl")
 
-    train_input = os.path.join(in_path, "train.tsv")
-    test_input = os.path.join(in_path, "test.tsv")
-    train_output = os.path.join(out_path, "train.pkl")
-    test_output = os.path.join(out_path, "test.pkl")
+        os.makedirs(self.features, exist_ok=True)
 
-    max_features = params["max_features"]
-    ngrams = params["ngrams"]
+        bag_of_words = CountVectorizer(
+        stop_words="english", max_features=self.max_features, ngram_range=(1, self.ngrams)
+        )
+        tfidf = TfidfTransformer(smooth_idf=False)
 
-    os.makedirs(out_path, exist_ok=True)
+        generate_and_save_train_features(
+            train_input=train_input,
+            train_output=train_output,
+            bag_of_words=bag_of_words,
+            tfidf=tfidf,
+        )
 
-    bag_of_words = CountVectorizer(
-        stop_words="english", max_features=max_features, ngram_range=(1, ngrams)
-    )
-    tfidf = TfidfTransformer(smooth_idf=False)
-
-    generate_and_save_train_features(
-        train_input=train_input,
-        train_output=train_output,
-        bag_of_words=bag_of_words,
-        tfidf=tfidf,
-    )
-
-    generate_and_save_test_features(
-        test_input=test_input,
-        test_output=test_output,
-        bag_of_words=bag_of_words,
-        tfidf=tfidf,
-    )
-
-
-if __name__ == "__main__":
-    main()
+        generate_and_save_test_features(
+            test_input=test_input,
+            test_output=test_output,
+            bag_of_words=bag_of_words,
+            tfidf=tfidf,
+        )

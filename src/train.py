@@ -5,7 +5,7 @@ import sys
 import numpy as np
 import yaml
 from sklearn.ensemble import RandomForestClassifier
-
+import zntrack
 
 def train(seed, n_est, min_split, matrix):
     """
@@ -35,31 +35,20 @@ def train(seed, n_est, min_split, matrix):
 
     return clf
 
+class Train(zntrack.Node):
+    min_split: float = zntrack.zn.params(0.01)
+    n_est: int = zntrack.zn.params(50)
+    seed: int = zntrack.zn.params(20170428)
 
-def main():
-    params = yaml.safe_load(open("params.yaml"))["train"]
+    features: str = zntrack.dvc.deps("data/features")
+    model: str = zntrack.dvc.outs("model.pkl")
 
-    if len(sys.argv) != 3:
-        sys.stderr.write("Arguments error. Usage:\n")
-        sys.stderr.write("\tpython train.py features model\n")
-        sys.exit(1)
+    def run(self): 
+        with open(os.path.join(self.features, "train.pkl"), "rb") as fd:
+            matrix, _ = pickle.load(fd)
+        
+        clf = train(seed=self.seed, n_est=self.n_est, min_split=self.min_split, matrix=matrix)
 
-    input = sys.argv[1]
-    output = sys.argv[2]
-    seed = params["seed"]
-    n_est = params["n_est"]
-    min_split = params["min_split"]
-
-    # Load the data
-    with open(os.path.join(input, "train.pkl"), "rb") as fd:
-        matrix, _ = pickle.load(fd)
-
-    clf = train(seed=seed, n_est=n_est, min_split=min_split, matrix=matrix)
-
-    # Save the model
-    with open(output, "wb") as fd:
-        pickle.dump(clf, fd)
-
-
-if __name__ == "__main__":
-    main()
+        # Save the model
+        with open(self.model, "wb") as fd:
+            pickle.dump(clf, fd)

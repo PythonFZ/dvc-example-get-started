@@ -11,70 +11,65 @@ artifacts:
     - nlp
     - classification
     - stackoverflow
+plots:
+- ROC:
+    template: simple
+    x: fpr
+    y:
+      eval/live/plots/sklearn/roc/train.json: tpr
+      eval/live/plots/sklearn/roc/test.json: tpr
+- Confusion-Matrix:
+    template: confusion
+    x: actual
+    y:
+      eval/live/plots/sklearn/cm/train.json: predicted
+      eval/live/plots/sklearn/cm/test.json: predicted
+- Precision-Recall:
+    template: simple
+    x: recall
+    y:
+      eval/prc/train.json: precision
+      eval/prc/test.json: precision
+- eval/importance.png
 stages:
-  prepare:
-    cmd: python src/prepare.py data/data.xml
+  Prepare:
+    cmd: zntrack run src.prepare.Prepare --name Prepare
     deps:
     - data/data.xml
-    - src/prepare.py
     params:
-    - prepare.seed
-    - prepare.split
+    - Prepare
     outs:
     - data/prepared
-  featurize:
-    cmd: python src/featurization.py data/prepared data/features
+    - nodes/Prepare/uuid
+  Featurize:
+    cmd: zntrack run src.featurization.Featurize --name Featurize
     deps:
     - data/prepared
-    - src/featurization.py
     params:
-    - featurize.max_features
-    - featurize.ngrams
+    - Featurize
     outs:
     - data/features
-  train:
-    cmd: python src/train.py data/features model.pkl
+    - nodes/Featurize/uuid
+  Train:
+    cmd: zntrack run src.train.Train --name Train
     deps:
     - data/features
-    - src/train.py
     params:
-    - train.min_split
-    - train.n_est
-    - train.seed
+    - Train
     outs:
     - model.pkl
-  evaluate:
-    cmd: python src/evaluate.py model.pkl data/features
+    - nodes/Train/uuid
+  Evaluate:
+    cmd: zntrack run src.evaluate.Evaluate --name Evaluate
     deps:
     - data/features
     - model.pkl
-    - src/evaluate.py
     outs:
     - eval/importance.png
+    - eval/live/metrics.json:
+        cache: false
     - eval/live/plots:
         cache: false
     - eval/prc:
         cache: false
-    metrics:
-    - eval/live/metrics.json:
-        cache: false
-plots:
-  - ROC:
-      template: simple
-      x: fpr
-      y:
-        eval/live/plots/sklearn/roc/train.json: tpr
-        eval/live/plots/sklearn/roc/test.json: tpr
-  - Confusion-Matrix:
-      template: confusion
-      x: actual
-      y:
-        eval/live/plots/sklearn/cm/train.json: predicted
-        eval/live/plots/sklearn/cm/test.json: predicted
-  - Precision-Recall:
-      template: simple
-      x: recall
-      y:
-        eval/prc/train.json: precision
-        eval/prc/test.json: precision
-  - eval/importance.png
+    - nodes/Evaluate/uuid

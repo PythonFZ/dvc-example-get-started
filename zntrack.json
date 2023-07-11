@@ -1,0 +1,22 @@
+{
+    "Prepare": {
+        "data": "data/data.xml",
+        "outs": "data/prepared"
+    },
+    "Featurize": {
+        "features": "data/features",
+        "prepared": "data/prepared"
+    },
+    "Train": {
+        "features": "data/features",
+        "model": "model.pkl"
+    },
+    "Evaluate": {
+        "features": "data/features",
+        "importance_png": "eval/importance.png",
+        "metrics": "eval/live/metrics.json",
+        "model": "model.pkl",
+        "plots": "eval/live/plots",
+        "prc": "eval/prc"
+    }
+}
