@@ -1,13 +1,13 @@
-prepare:
-  split: 0.20
-  seed: 20170428
-
+Prepare:
+    seed: 20170428
+    split: 0.2
 featurize:
-  max_features: 200
-  ngrams: 2
-
+    max_features: 200
+    ngrams: 2
+prepare:
+    seed: 20170428
+    split: 0.2
 train:
-  seed: 20170428
-  n_est: 50
-  min_split: 0.01
-
+    min_split: 0.01
+    n_est: 50
+    seed: 20170428

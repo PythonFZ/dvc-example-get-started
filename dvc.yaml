@@ -12,16 +12,6 @@ artifacts:
     - classification
     - stackoverflow
 stages:
-  prepare:
-    cmd: python src/prepare.py data/data.xml
-    deps:
-    - data/data.xml
-    - src/prepare.py
-    params:
-    - prepare.seed
-    - prepare.split
-    outs:
-    - data/prepared
   featurize:
     cmd: python src/featurization.py data/prepared data/features
     deps:
@@ -58,23 +48,32 @@ stages:
     metrics:
     - eval/live/metrics.json:
         cache: false
+  Prepare:
+    cmd: zntrack run src.prepare.Prepare --name Prepare
+    deps:
+    - data/data.xml
+    params:
+    - Prepare
+    outs:
+    - data/prepared
+    - nodes/Prepare/uuid
 plots:
-  - ROC:
-      template: simple
-      x: fpr
-      y:
-        eval/live/plots/sklearn/roc/train.json: tpr
-        eval/live/plots/sklearn/roc/test.json: tpr
-  - Confusion-Matrix:
-      template: confusion
-      x: actual
-      y:
-        eval/live/plots/sklearn/cm/train.json: predicted
-        eval/live/plots/sklearn/cm/test.json: predicted
-  - Precision-Recall:
-      template: simple
-      x: recall
-      y:
-        eval/prc/train.json: precision
-        eval/prc/test.json: precision
-  - eval/importance.png
+- ROC:
+    template: simple
+    x: fpr
+    y:
+      eval/live/plots/sklearn/roc/train.json: tpr
+      eval/live/plots/sklearn/roc/test.json: tpr
+- Confusion-Matrix:
+    template: confusion
+    x: actual
+    y:
+      eval/live/plots/sklearn/cm/train.json: predicted
+      eval/live/plots/sklearn/cm/test.json: predicted
+- Precision-Recall:
+    template: simple
+    x: recall
+    y:
+      eval/prc/train.json: precision
+      eval/prc/test.json: precision
+- eval/importance.png

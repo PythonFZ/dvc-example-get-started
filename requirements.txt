@@ -4,3 +4,4 @@ pyaml
 scikit-learn
 scipy
 matplotlib
+zntrack

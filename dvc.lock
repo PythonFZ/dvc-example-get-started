@@ -100,3 +100,25 @@ stages:
       md5: a3be580ddaffbf75398db7484acbcbd8.dir
       size: 297855
       nfiles: 2
+  Prepare:
+    cmd: zntrack run src.prepare.Prepare --name Prepare
+    deps:
+    - path: data/data.xml
+      hash: md5
+      md5: 22a1a2931c8370d3aeedd7183606fd7f
+      size: 14445097
+    params:
+      params.yaml:
+        Prepare:
+          seed: 20170428
+          split: 0.2
+    outs:
+    - path: data/prepared
+      hash: md5
+      md5: 153aad06d376b6595932470e459ef42a.dir
+      size: 8437363
+      nfiles: 2
+    - path: nodes/Prepare/uuid
+      hash: md5
+      md5: a53f4517c091182927a4351423d5f2f1
+      size: 36
